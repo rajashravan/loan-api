@@ -22,7 +22,8 @@ class LoanCreationRequest(BaseModel):
 
 
 class Loan:
-    def __init__(self, loan_id: uuid.UUID, user_id: uuid.UUID, amount: float, annual_interest_rate: float, loan_term: int):
+    def __init__(self, loan_id: uuid.UUID, user_id: uuid.UUID, amount: float, annual_interest_rate: float,
+                 loan_term: int):
         self.loan_id = loan_id
         self.user_id = user_id
         self.amount = amount
@@ -30,7 +31,7 @@ class Loan:
         self.loan_term = loan_term
 
     @staticmethod
-    def make_payment(principal_remaining, mpr, monthly_payment):
+    def make_payment(principal_remaining, mpr, monthly_payment) -> dict:
 
         current_interest_payment = principal_remaining * mpr
         current_principal_payment = monthly_payment - current_interest_payment
@@ -51,19 +52,25 @@ class Loan:
 
         monthly_payment = (principal_remaining * mpr) / (1 - (1 + mpr) ** -self.loan_term)
 
+        total_interest_paid = 0
         payments = []
 
         while principal_remaining > 0 and term_remaining > 0:
             cur_payment = self.make_payment(principal_remaining, mpr, monthly_payment)
             principal_remaining = cur_payment['principal_remaining']
             term_remaining -= 1
+            total_interest_paid += cur_payment['current_interest_payment']
             payments.append({
                 "month": self.loan_term - term_remaining,
-                "remaining_balance": cur_payment['principal_remaining'],
+                "remaining_balance": principal_remaining,
                 "monthly_payment": cur_payment['current_principal_payment'] + cur_payment['current_interest_payment'],
+                "aggregate_principal_paid": self.amount - principal_remaining,
+                "aggregate_interest_paid": total_interest_paid,
             })
 
-        return payments
+        self.loan_schedule = payments
+        return self.loan_schedule
+
 
 
 def validate_loan_creation_request(loan_creation_request: LoanCreationRequest) -> Optional[str]:
