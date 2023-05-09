@@ -123,6 +123,11 @@ def create_loan_from_loan_creation_request(loan_creation_request: LoanCreationRe
 
 
 def validate_loan_creation_request(loan_creation_request: LoanCreationRequest) -> Optional[str]:
+    """
+    Validate the loan creation request. Returns
+    :param loan_creation_request:
+    :return: Error message string if validation fails, else None.
+    """
     if uuid.UUID(loan_creation_request.user_id) not in users:
         return "User not found"
     if loan_creation_request.amount <= 0:
@@ -143,8 +148,10 @@ async def root():
 @app.post("/users/")
 async def create_user():
     new_user_id = uuid.uuid4()
-    users[new_user_id] = 0
-    return {"created_user_id": str(new_user_id)}
+    users[new_user_id] = []
+    return {
+        "created_user_id": str(new_user_id),
+    }
 
 
 @app.post("/loans/")
@@ -152,28 +159,111 @@ async def create_loan(loan_creation_request: LoanCreationRequest):
     error_message = validate_loan_creation_request(loan_creation_request)
     if error_message:
         raise HTTPException(status_code=400, detail=error_message)
-    return loan_creation_request
+    new_loan = create_loan_from_loan_creation_request(loan_creation_request)
+    loans[new_loan.loan_id] = new_loan
+    users[new_loan.user_id].append(new_loan.loan_id)
+    return new_loan
 
 
-async def tests():
-    # Test 1
+@app.get("/loans/{loan_id}")
+async def get_loan(loan_id: uuid.UUID):
+    if loan_id not in loans:
+        raise HTTPException(status_code=404, detail="Loan not found")
+
+    return loans[loan_id].get_loan_metadata()
+
+
+@app.get("/loans/")
+async def get_loans_for_user(user_id: uuid.UUID):
+    if user_id not in users:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    loan_ids_for_user = users[user_id]
+    loans_for_user = []
+    for loan_id in loan_ids_for_user:
+        loans_for_user.append(loans[loan_id].get_loan_metadata())
+    return loans_for_user
+
+
+@app.get("/loans/{loan_id}/schedule")
+async def get_loan_schedule(loan_id: uuid.UUID):
+    if loan_id not in loans:
+        raise HTTPException(status_code=404, detail="Loan not found")
+
+    return loans[loan_id].get_loan_schedule()
+
+
+@app.get("/loans/{loan_id}/summary/{month}")
+async def get_loan_summary_for_month(loan_id: uuid.UUID, month: int):
+    if loan_id not in loans:
+        raise HTTPException(status_code=404, detail="Loan not found")
+
+    summary = loans[loan_id].get_loan_summary_for_month(month)
+    if not summary:
+        raise HTTPException(status_code=400, detail=f"Month {month} does not exist in loan {loan_id}")
+    return summary
+
+
+@app.post("/loans/{loan_id}/share/")
+async def share_loan_to_user(loan_id: uuid.UUID, user_id: uuid.UUID):
+    """
+    Interpretted this requirement from the doc as transferring a loan from one user to another.
+    :param user_id: user_id to transfer the loan to
+    :return:
+    """
+
+    if user_id not in users:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if loan_id not in loans:
+        raise HTTPException(status_code=404, detail="Loan not found")
+
+    loan = loans[loan_id]
+    loan.transfer_to_user(user_id)
+
+    return loan
+
+
+async def test_normal_flow():
     msg = await create_user()
     user_id = msg["created_user_id"]
     loan = Loan(loan_id=uuid.uuid4(), user_id=uuid.UUID(user_id), amount=10000, annual_interest_rate=10, loan_term=10)
     payments = loan.get_loan_schedule()
     expected_payments = [
-        {'month': 1, 'remaining_balance': 9036.93, 'monthly_payment': 1046.4},
-        {'month': 2, 'remaining_balance': 8065.83, 'monthly_payment': 1046.41},
-        {'month': 3, 'remaining_balance': 7086.64, 'monthly_payment': 1046.41},
-        {'month': 4, 'remaining_balance': 6099.29, 'monthly_payment': 1046.41},
-        {'month': 5, 'remaining_balance': 5103.71, 'monthly_payment': 1046.41},
-        {'month': 6, 'remaining_balance': 4099.84, 'monthly_payment': 1046.4},
-        {'month': 7, 'remaining_balance': 3087.6, 'monthly_payment': 1046.41},
-        {'month': 8, 'remaining_balance': 2066.93, 'monthly_payment': 1046.3999999999999},
-        {'month': 9, 'remaining_balance': 1037.75, 'monthly_payment': 1046.4},
-        {'month': 10, 'remaining_balance': -0.01, 'monthly_payment': 1046.41},
+        {'month': 1, 'remaining_balance': 9036.93, 'monthly_payment': 1046.4,
+         'aggregate_principal_paid': 963.0699999999997, 'aggregate_interest_paid': 83.33},
+        {'month': 2, 'remaining_balance': 8065.83, 'monthly_payment': 1046.41, 'aggregate_principal_paid': 1934.17,
+         'aggregate_interest_paid': 158.64},
+        {'month': 3, 'remaining_balance': 7086.64, 'monthly_payment': 1046.41,
+         'aggregate_principal_paid': 2913.3599999999997, 'aggregate_interest_paid': 225.85999999999999},
+        {'month': 4, 'remaining_balance': 6099.29, 'monthly_payment': 1046.41, 'aggregate_principal_paid': 3900.71,
+         'aggregate_interest_paid': 284.91999999999996},
+        {'month': 5, 'remaining_balance': 5103.71, 'monthly_payment': 1046.41, 'aggregate_principal_paid': 4896.29,
+         'aggregate_interest_paid': 335.74999999999994},
+        {'month': 6, 'remaining_balance': 4099.84, 'monthly_payment': 1046.4, 'aggregate_principal_paid': 5900.16,
+         'aggregate_interest_paid': 378.28},
+        {'month': 7, 'remaining_balance': 3087.6, 'monthly_payment': 1046.41, 'aggregate_principal_paid': 6912.4,
+         'aggregate_interest_paid': 412.45},
+        {'month': 8, 'remaining_balance': 2066.93, 'monthly_payment': 1046.3999999999999,
+         'aggregate_principal_paid': 7933.07, 'aggregate_interest_paid': 438.18},
+        {'month': 9, 'remaining_balance': 1037.75, 'monthly_payment': 1046.4, 'aggregate_principal_paid': 8962.25,
+         'aggregate_interest_paid': 455.4},
+        {'month': 10, 'remaining_balance': -0.01, 'monthly_payment': 1046.41, 'aggregate_principal_paid': 10000.01,
+         'aggregate_interest_paid': 464.04999999999995},
     ]
+    # for payment in payments:
+    #     print(payment)
     assert payments == expected_payments
 
-    # Test 2
+    loan_summary_month_1 = loan.get_loan_summary_for_month(1)
+    assert loan_summary_month_1 == expected_payments[0]
 
+
+async def tests():
+    await test_normal_flow()
+
+"""
+TODO:
+* tests
+* proper HTTP verbage and endpoint naming and usage
+"""
