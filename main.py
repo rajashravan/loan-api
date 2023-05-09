@@ -35,7 +35,7 @@ def validate_user_exists(user_id: uuid.UUID):
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Welcome to the Loan API!"}
 
 
 @app.post("/users/")
@@ -49,9 +49,11 @@ async def create_user():
 
 @app.post("/loans/")
 async def create_loan(loan_creation_request: LoanCreationRequest):
+    validate_user_exists(uuid.UUID(loan_creation_request.user_id))
     error_message = validate_loan_creation_request(loan_creation_request)
     if error_message:
         raise HTTPException(status_code=400, detail=error_message)
+
     new_loan = create_loan_from_loan_creation_request(loan_creation_request)
     loans[new_loan.loan_id] = new_loan
     users[new_loan.user_id].append(new_loan.loan_id)
@@ -73,6 +75,7 @@ async def get_loans_for_user(user_id: uuid.UUID):
     loans_for_user = []
     for loan_id in loan_ids_for_user:
         loans_for_user.append(loans[loan_id].get_loan_metadata())
+
     return loans_for_user
 
 
@@ -90,6 +93,7 @@ async def get_loan_summary_for_month(loan_id: uuid.UUID, month: int):
     summary = loans[loan_id].get_loan_summary_for_month(month)
     if not summary:
         raise HTTPException(status_code=400, detail=f"Month {month} does not exist in loan {loan_id}")
+
     return summary
 
 
@@ -102,8 +106,8 @@ async def share_loan_to_user(loan_id: uuid.UUID, user_id: uuid.UUID):
     :return:
     """
 
-    validate_user_exists(user_id)
     validate_loan_exists(loan_id)
+    validate_user_exists(user_id)
 
     loan = loans[loan_id]
     loan.transfer_to_user(user_id)

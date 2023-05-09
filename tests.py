@@ -1,11 +1,13 @@
 import asyncio
-import uuid
-from loans import Loan
+from loans import LoanCreationRequest
+from main import create_user, create_loan
 
 
 async def test_normal_flow():
-    user_id = uuid.uuid4()
-    loan = Loan(loan_id=uuid.uuid4(), user_id=user_id, amount=10000, annual_interest_rate=10, loan_term=10)
+    user = await create_user()
+    user_id = user['created_user_id']
+    loan_creation_request = LoanCreationRequest(user_id=user_id, amount=10000, annual_interest_rate=10, loan_term=10)
+    loan = await create_loan(loan_creation_request)
     payments = loan.get_loan_schedule()
     expected_payments = [
         {'month': 1, 'remaining_balance': 9036.93, 'monthly_payment': 1046.4,

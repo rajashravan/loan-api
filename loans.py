@@ -31,7 +31,6 @@ class Loan:
 
     @staticmethod
     def make_payment(principal_remaining, mpr, monthly_payment) -> dict:
-
         current_interest_payment = principal_remaining * mpr
         current_principal_payment = monthly_payment - current_interest_payment
 
@@ -105,8 +104,6 @@ def validate_loan_creation_request(loan_creation_request: LoanCreationRequest) -
     :param loan_creation_request:
     :return: Error message string if validation fails, else None.
     """
-    if uuid.UUID(loan_creation_request.user_id) not in users:
-        return "User not found"
     if loan_creation_request.amount <= 0:
         return "Loan Amount must be a positive number"
     if loan_creation_request.annual_interest_rate <= 0:
