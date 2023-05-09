@@ -3,15 +3,8 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException
 import uuid
 from pydantic import BaseModel
-import pandas as pd
 
 app = FastAPI()
-
-users = {
-    uuid.UUID('e0e95d7f-cf4b-4ed0-b1d3-ea73d6879be2'): 0
-}  # key is user_id, value does not matter.
-
-loans = {}
 
 
 class LoanCreationRequest(BaseModel):
@@ -98,6 +91,27 @@ class Loan:
 
     def transfer_to_user(self, user_id: uuid.UUID):
         self.user_id = user_id
+
+
+# Dictionary for in-memory store for users. Key is user_id, value is list of user's loans.
+users = {
+    uuid.UUID('e0e95d7f-cf4b-4ed0-b1d3-ea73d6879be2'): [
+        uuid.UUID('fca9f862-3f4c-4746-bc30-fd767a072963'),
+    ],
+}
+
+# Dictionary for in-memory store for loans. Key is loan_id, value is loan object.
+loans = {
+    uuid.UUID('fca9f862-3f4c-4746-bc30-fd767a072963'): Loan(
+        loan_id=uuid.UUID('fca9f862-3f4c-4746-bc30-fd767a072963'),
+        user_id=uuid.UUID('e0e95d7f-cf4b-4ed0-b1d3-ea73d6879be2'),
+        amount=1000,
+        annual_interest_rate=10,
+        loan_term=10,
+    )
+}
+
+
 def create_loan_from_loan_creation_request(loan_creation_request: LoanCreationRequest) -> Loan:
     user_id = uuid.UUID(loan_creation_request.user_id)
     amount = loan_creation_request.amount
