@@ -37,9 +37,9 @@ class Loan:
         principal_remaining -= current_principal_payment
 
         return {
-            "principal_remaining": round(principal_remaining, 2),
-            "current_principal_payment": round(current_principal_payment, 2),
-            "current_interest_payment": round(current_interest_payment, 2),
+            "principal_remaining": principal_remaining,
+            "current_principal_payment": current_principal_payment,
+            "current_interest_payment": current_interest_payment,
         }
 
     def get_loan_schedule(self) -> list:
@@ -62,11 +62,11 @@ class Loan:
             term_remaining -= 1
             total_interest_paid += cur_payment['current_interest_payment']
             payments.append({
-                "month": self.loan_term - term_remaining,
-                "remaining_balance": principal_remaining,
-                "monthly_payment": cur_payment['current_principal_payment'] + cur_payment['current_interest_payment'],
-                "aggregate_principal_paid": self.amount - principal_remaining,
-                "aggregate_interest_paid": total_interest_paid,
+                "month": round(self.loan_term - term_remaining, 2),
+                "remaining_balance": round(principal_remaining, 2),
+                "monthly_payment": round(cur_payment['current_principal_payment'] + cur_payment['current_interest_payment'], 2),
+                "aggregate_principal_paid": round(self.amount - principal_remaining, 2),
+                "aggregate_interest_paid": round(total_interest_paid,2),
             })
 
         self.loan_schedule = payments
