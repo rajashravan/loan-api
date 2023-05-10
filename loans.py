@@ -46,18 +46,18 @@ class Loan:
         if self.loan_schedule:
             return self.loan_schedule
 
-        apr = self.annual_interest_rate / 100
-        mpr = apr / 12
+        annual_rate = self.annual_interest_rate / 100
+        monthly_rate = annual_rate / 12
         principal_remaining = self.amount
         term_remaining = self.loan_term
 
-        monthly_payment = (principal_remaining * mpr) / (1 - (1 + mpr) ** -self.loan_term)
+        monthly_payment = (principal_remaining * monthly_rate) / (1 - (1 + monthly_rate) ** -self.loan_term)
 
         total_interest_paid = 0
         payments = []
 
         while principal_remaining > 0 and term_remaining > 0:
-            cur_payment = self.make_payment(principal_remaining, mpr, monthly_payment)
+            cur_payment = self.make_payment(principal_remaining, monthly_rate, monthly_payment)
             principal_remaining = cur_payment['principal_remaining']
             term_remaining -= 1
             total_interest_paid += cur_payment['current_interest_payment']
@@ -78,11 +78,10 @@ class Loan:
         :param month: Month to get the loan summary for.
         :return: Loan summary for a given month as a dictionary. Else None if month does not exist.
         """
-        loan_schedule = self.get_loan_schedule()
-        try:
-            return loan_schedule[month - 1]
-        except IndexError:
+        if month <= 0 or month > self.loan_term:
             return None
+        loan_schedule = self.get_loan_schedule()
+        return loan_schedule[month - 1]
 
     def transfer_to_user(self, user_id: uuid.UUID):
         self.user_id = user_id

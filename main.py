@@ -25,17 +25,17 @@ loans = {
 
 def validate_loan_exists(loan_id: uuid.UUID):
     if loan_id not in loans:
-        raise HTTPException(status_code=404, detail="Loan not found")
+        raise HTTPException(status_code=400, detail="Loan not found")
 
 
 def validate_user_exists(user_id: uuid.UUID):
     if user_id not in users:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=400, detail="User not found")
 
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to the Loan API!"}
+    return {"message": "Welcome to the Greystone Labs Loan API!"}
 
 
 @app.post("/users/")
