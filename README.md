@@ -20,3 +20,7 @@ pip install -r requirements.txt
 ```
 uvicorn main:app --reload
 ```
+
+## Notes
+
+Some git commit messages got moved from the commit header to the commit body
