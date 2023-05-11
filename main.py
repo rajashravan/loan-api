@@ -103,7 +103,7 @@ async def share_loan_to_user(loan_id: uuid.UUID, user_id: uuid.UUID):
     Interpretted this requirement from the doc as: transferring a loan from one user to another.
     :param loan_id: loan_id of loan to transfer
     :param user_id: user_id to transfer the loan to
-    :return:
+    :return: Transferred Loan
     """
 
     validate_loan_exists(loan_id)

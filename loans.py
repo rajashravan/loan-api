@@ -30,7 +30,17 @@ class Loan:
         }
 
     @staticmethod
-    def make_payment(principal_remaining, mpr, monthly_payment) -> dict:
+    def make_payment(principal_remaining: float, mpr: float, monthly_payment: float) -> dict:
+        """
+        Makes a monthly payment for a loan.
+        :param principal_remaining: how much of the principal is remaining
+        :param mpr: the monthly rate
+        :param monthly_payment: the amount of the payment
+        :return: a dictionary with the following keys:
+        1. 'principal_remaining'
+        2. 'current_principal_payment' - how much of the payment went towards the principal
+        3. 'current_interest_payment' - how much of the payment went towards the interest
+        """
         current_interest_payment = principal_remaining * mpr
         current_principal_payment = monthly_payment - current_interest_payment
 
@@ -43,6 +53,15 @@ class Loan:
         }
 
     def get_loan_schedule(self) -> list:
+        """
+        Fetches the loan schedule for this loan. Creates it first if it does not already exist.
+        :return: List of payments for this loan. Each payment is a dictionary with the following keys:
+        1. 'month'
+        2. 'remaining_balance' - remaining principal after this month's payment
+        3. 'monthly_payment'
+        4. 'aggregate_principal_paid'
+        5. 'aggregate_interest_paid'
+        """
         if self.loan_schedule:
             return self.loan_schedule
 
@@ -99,7 +118,7 @@ def create_loan_from_loan_creation_request(loan_creation_request: LoanCreationRe
 
 def validate_loan_creation_request(loan_creation_request: LoanCreationRequest) -> Optional[str]:
     """
-    Validate the loan creation request. Returns
+    Validate the loan creation request.
     :param loan_creation_request:
     :return: Error message string if validation fails, else None.
     """
