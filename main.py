@@ -97,7 +97,7 @@ async def get_loan_summary_for_month(loan_id: uuid.UUID, month: int):
     return summary
 
 
-@app.post("/loans/{loan_id}/share/")
+@app.put("/loans/{loan_id}/share/")
 async def share_loan_to_user(loan_id: uuid.UUID, user_id: uuid.UUID):
     """
     Interpretted this requirement from the doc as: transferring a loan from one user to another.
@@ -114,5 +114,6 @@ async def share_loan_to_user(loan_id: uuid.UUID, user_id: uuid.UUID):
     users[previous_owner_id].remove(loan.loan_id)
 
     loan.transfer_to_user(user_id)
+    users[loan.user_id].append(loan.loan_id)
 
     return loan
