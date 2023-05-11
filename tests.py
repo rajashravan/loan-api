@@ -125,6 +125,9 @@ class GreyStoneTestCase(unittest.IsolatedAsyncioTestCase):
         loan_after_share = await get_loan(loan.loan_id)
         self.assertEqual(loan_after_share['user_id'], uuid.UUID(new_owner_id))
 
+        original_owner_loans = await get_loans_for_user(uuid.UUID(original_owner_id))
+        self.assertEqual(original_owner_loans, [])
+
     async def test_invalid_user(self):
         """
         Test that a user cannot create a loan with an invalid user id

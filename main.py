@@ -110,6 +110,9 @@ async def share_loan_to_user(loan_id: uuid.UUID, user_id: uuid.UUID):
     validate_user_exists(user_id)
 
     loan = loans[loan_id]
+    previous_owner_id = loan.user_id
+    users[previous_owner_id].remove(loan.loan_id)
+
     loan.transfer_to_user(user_id)
 
     return loan
