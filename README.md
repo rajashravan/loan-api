@@ -21,6 +21,13 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
+## Testing
+
+Simply run
+```
+python3 tests.py
+```
+
 ## Notes
 
 Some git commit messages got moved from the commit header to the commit body
