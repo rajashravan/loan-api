@@ -1,4 +1,4 @@
-# Greystone Labs Loan API
+# Loan API
 
 ## Setup
 
